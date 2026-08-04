@@ -1,19 +1,27 @@
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatBytes, formatPercent } from "@/lib/utils";
 import type { ProcessInfo } from "@/types";
 
 interface ProcessTableProps {
   processes: ProcessInfo[];
+  logicalThreads?: number;
 }
 
 type SortKey = "memoryBytes" | "cpuUsage" | "name";
 
-export function ProcessTable({ processes }: ProcessTableProps) {
+function isTauriRuntime(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+export function ProcessTable({ processes, logicalThreads = 1 }: ProcessTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("memoryBytes");
   const [sortDesc, setSortDesc] = useState(true);
   const [query, setQuery] = useState("");
+  const [killingPid, setKillingPid] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     const filtered = query
@@ -41,9 +49,30 @@ export function ProcessTable({ processes }: ProcessTableProps) {
 
   const columns: { key: SortKey; label: string; align?: "right" }[] = [
     { key: "name", label: "Processus" },
-    { key: "cpuUsage", label: "CPU", align: "right" },
+    { key: "cpuUsage", label: "CPU (multi / norm.)", align: "right" },
     { key: "memoryBytes", label: "Mémoire", align: "right" },
   ];
+
+  async function killProcess(pid: number, name: string) {
+    if (!isTauriRuntime()) {
+      setActionError("Action disponible uniquement dans l'application desktop Tauri.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Terminer le processus ${name} (PID ${pid}) ?`);
+    if (!confirmed) return;
+
+    setActionError(null);
+    setKillingPid(pid);
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("kill_process", { pid });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Impossible de terminer le processus.");
+    } finally {
+      setKillingPid(null);
+    }
+  }
 
   return (
     <Card>
@@ -63,6 +92,8 @@ export function ProcessTable({ processes }: ProcessTableProps) {
             className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
+
+        {actionError ? <p className="mb-3 text-xs text-destructive">{actionError}</p> : null}
 
         <div className="scrollbar-thin max-h-[420px] overflow-y-auto rounded-md border border-border/40">
           <table className="w-full border-collapse text-sm">
@@ -90,20 +121,40 @@ export function ProcessTable({ processes }: ProcessTableProps) {
                     </span>
                   </th>
                 ))}
+                <th className="w-28 px-3 py-2 text-right font-medium">Action</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((p) => (
                 <tr key={p.pid} className="border-b border-border/30 last:border-0 hover:bg-muted/30">
+                  {(() => {
+                    const normalized = Math.min(100, p.cpuUsage / Math.max(1, logicalThreads));
+                    return (
+                      <>
                   <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">{p.pid}</td>
                   <td className="px-3 py-1.5 font-medium">{p.name}</td>
-                  <td className="px-3 py-1.5 text-right font-mono tabular-nums">{formatPercent(p.cpuUsage, 1)}</td>
+                  <td className="px-3 py-1.5 text-right font-mono tabular-nums">
+                    {formatPercent(p.cpuUsage, 1)} / {formatPercent(normalized, 1)}
+                  </td>
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums">{formatBytes(p.memoryBytes)}</td>
+                  <td className="px-3 py-1.5 text-right">
+                    <Button
+                      variant="outline"
+                      onClick={() => void killProcess(p.pid, p.name)}
+                      disabled={killingPid === p.pid}
+                      className="h-7 border-destructive/60 px-2 text-xs text-destructive hover:bg-destructive/10"
+                    >
+                      {killingPid === p.pid ? "Arrêt..." : "Terminer"}
+                    </Button>
+                  </td>
+                      </>
+                    );
+                  })()}
                 </tr>
               ))}
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
                     Aucun processus ne correspond.
                   </td>
                 </tr>

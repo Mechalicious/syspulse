@@ -25,6 +25,10 @@ function randomWalk(prev: number, spread: number): number {
   return Math.min(100, Math.max(0, next));
 }
 
+function jitter(prev: number, spread: number, min = 0): number {
+  return Math.max(min, prev + (Math.random() - 0.5) * spread);
+}
+
 function mockStats(prev: SystemStats | null): SystemStats {
   const cpuPerCore = (prev?.cpuPerCore.length ? prev.cpuPerCore : Array(8).fill(20)).map((v) =>
     randomWalk(v, 30),
@@ -51,16 +55,47 @@ function mockStats(prev: SystemStats | null): SystemStats {
     ),
   })).sort((a, b) => b.memoryBytes - a.memoryBytes);
 
+  const cpuPhysicalCores = 8;
+  const cpuPerPhysicalCoreEstimated = cpuPerCore.length % cpuPhysicalCores === 0
+    ? Array.from({ length: cpuPhysicalCores }, (_, i) => {
+        const perCore = cpuPerCore.length / cpuPhysicalCores;
+        const slice = cpuPerCore.slice(i * perCore, (i + 1) * perCore);
+        return slice.reduce((a, b) => a + b, 0) / slice.length;
+      })
+    : null;
+
   return {
     cpuUsage,
     cpuPerCore,
+    cpuPerPhysicalCoreEstimated,
     cpuName: "CPU (données simulées — hors environnement Tauri)",
+    cpuPhysicalCores,
     cpuTemperatureC: Math.round(randomWalk(prev?.cpuTemperatureC ?? 62, 3)),
     cpuPowerW: Math.round(randomWalk(prev?.cpuPowerW ?? 58, 10)),
+    cpuClockMhz: Math.round(jitter(prev?.cpuClockMhz ?? 5400, 120, 1500)),
+    cpuVoltageV: Number(jitter(prev?.cpuVoltageV ?? 1.28, 0.04, 0.7).toFixed(2)),
     memoryUsedBytes,
     memoryTotalBytes,
     swapUsedBytes: Math.round(memoryTotalBytes * 0.02),
     swapTotalBytes: Math.round(memoryTotalBytes * 0.25),
+    network: {
+      downloadBps: Math.round(jitter(prev?.network.downloadBps ?? 220_000, 90_000)),
+      uploadBps: Math.round(jitter(prev?.network.uploadBps ?? 110_000, 45_000)),
+    },
+    fans: [
+      {
+        name: "GPU Fan (simulé)",
+        source: "NVIDIA",
+        speedPercent: Math.round(jitter(prev?.fans[0]?.speedPercent ?? 38, 8, 0)),
+        speedRpm: null,
+      },
+      {
+        name: "CPU Fan (simulé)",
+        source: "Carte mère",
+        speedPercent: null,
+        speedRpm: Math.round(jitter(prev?.fans[1]?.speedRpm ?? 1250, 140, 300)),
+      },
+    ],
     gpus: [
       {
         name: "GPU (simulé)",
@@ -69,6 +104,8 @@ function mockStats(prev: SystemStats | null): SystemStats {
         memoryTotalMb: 8192,
         temperatureC: Math.round(randomWalk(prev?.gpus[0]?.temperatureC ?? 55, 4)),
         powerW: Math.round(randomWalk(prev?.gpus[0]?.powerW ?? 85, 12)),
+        clockMhz: Math.round(jitter(prev?.gpus[0]?.clockMhz ?? 2580, 80, 200)),
+        voltageV: Number(jitter(prev?.gpus[0]?.voltageV ?? 0.95, 0.06, 0.5).toFixed(2)),
       },
     ],
     processes,

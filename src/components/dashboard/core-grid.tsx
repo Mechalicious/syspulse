@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CoreGridProps {
   cores: number[];
+  title: string;
+  subtitle: string;
 }
 
 function coreColor(usage: number): string {
@@ -10,13 +12,13 @@ function coreColor(usage: number): string {
   return "var(--color-chart-1)";
 }
 
-export function CoreGrid({ cores }: CoreGridProps) {
+export function CoreGrid({ cores, title, subtitle }: CoreGridProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle>
-          <span>Cœurs CPU</span>
-          <span className="text-xs font-normal text-muted-foreground">{cores.length} threads</span>
+          <span>{title}</span>
+          <span className="text-xs font-normal text-muted-foreground">{subtitle}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>

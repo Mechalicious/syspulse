@@ -1,19 +1,28 @@
 import { useState } from "react";
-import { Activity, Cpu, ListTree, MonitorCog } from "lucide-react";
+import { Activity, Cpu, Fan, ListTree, MonitorCog, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
-  activeSection: "dashboard" | "processes";
-  onNavigate: (section: "dashboard" | "processes") => void;
+  activeSection: "dashboard" | "processes" | "fans" | "settings";
+  onNavigate: (section: "dashboard" | "processes" | "fans" | "settings") => void;
+  language: "fr" | "en";
 }
 
-const NAV_ITEMS = [
-  { id: "dashboard" as const, label: "Tableau de bord", icon: Activity },
-  { id: "processes" as const, label: "Processus", icon: ListTree },
-];
-
-export function Sidebar({ activeSection, onNavigate }: SidebarProps) {
+export function Sidebar({ activeSection, onNavigate, language }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const navItems = language === "en"
+    ? [
+        { id: "dashboard" as const, label: "Dashboard", icon: Activity },
+        { id: "processes" as const, label: "Processes", icon: ListTree },
+        { id: "fans" as const, label: "Fans", icon: Fan },
+        { id: "settings" as const, label: "Settings", icon: Settings },
+      ]
+    : [
+        { id: "dashboard" as const, label: "Tableau de bord", icon: Activity },
+        { id: "processes" as const, label: "Processus", icon: ListTree },
+        { id: "fans" as const, label: "Ventilateurs", icon: Fan },
+        { id: "settings" as const, label: "Parametres", icon: Settings },
+      ];
 
   return (
     <div
@@ -27,7 +36,7 @@ export function Sidebar({ activeSection, onNavigate }: SidebarProps) {
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className="mb-6 flex items-center gap-2 rounded-md px-2 py-1 text-left"
-          title="Réduire / agrandir"
+          title={language === "en" ? "Collapse / expand" : "Reduire / agrandir"}
         >
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-chart-1/20 text-chart-1">
             <MonitorCog className="h-5 w-5" />
@@ -42,8 +51,8 @@ export function Sidebar({ activeSection, onNavigate }: SidebarProps) {
           </span>
         </button>
 
-        <nav className="flex flex-col gap-1" aria-label="Navigation principale">
-          {NAV_ITEMS.map((item) => {
+        <nav className="flex flex-col gap-1" aria-label={language === "en" ? "Main navigation" : "Navigation principale"}>
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.id;
             return (
@@ -69,7 +78,7 @@ export function Sidebar({ activeSection, onNavigate }: SidebarProps) {
       <div className="mt-auto flex items-center gap-2 border-t border-border/60 px-4 py-3 text-muted-foreground">
         <Cpu className="h-4 w-4 flex-shrink-0" />
         <span className={cn("truncate text-xs", collapsed && "sr-only opacity-0")}>
-          Monitoring temps réel
+          {language === "en" ? "Real-time monitoring" : "Monitoring temps reel"}
         </span>
       </div>
     </div>
