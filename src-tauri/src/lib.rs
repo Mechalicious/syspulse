@@ -116,7 +116,13 @@ fn setup_tray(app: &AppHandle) -> Result<(), String> {
     let menu = Menu::with_items(app, &[&show_item, &quit_item])
         .map_err(|e| format!("Création du menu tray impossible: {e}"))?;
 
-    TrayIconBuilder::new()
+    let tray_icon = app
+        .default_window_icon()
+        .cloned()
+        .ok_or_else(|| "Aucune icône par défaut disponible pour le tray".to_string())?;
+
+    TrayIconBuilder::with_id("main")
+        .icon(tray_icon)
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
@@ -165,7 +171,7 @@ fn get_app_settings(state: State<AppState>) -> Result<AppSettings, String> {
 }
 
 #[tauri::command]
-fn update_app_settings(app: AppHandle, state: State<AppState>, settings: AppSettings) -> Result<(), String> {
+async fn update_app_settings(app: AppHandle, state: State<'_, AppState>, settings: AppSettings) -> Result<(), String> {
     save_settings_to_disk(&app, &settings)?;
     {
         let mut guard = state
