@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Cpu, MemoryStick, MonitorSmartphone } from "lucide-react";
+import { Cpu, MemoryStick, MonitorSmartphone, X } from "lucide-react";
+import { RingGauge } from "@/components/floating/ring-gauge";
 import { Sidebar } from "@/components/layout/sidebar";
 import { UsageCard, type HistoryPoint } from "@/components/dashboard/usage-card";
 import { CoreGrid } from "@/components/dashboard/core-grid";
@@ -87,6 +88,8 @@ function appText(language: AppLanguage) {
       floatingCpu: "CPU",
       floatingMem: "Memory",
       floatingGpu: "GPU",
+      floatingGpuMemory: "GPU Memory",
+      floatingClose: "Close",
     };
   }
 
@@ -112,6 +115,8 @@ function appText(language: AppLanguage) {
     floatingCpu: "CPU",
     floatingMem: "Memoire",
     floatingGpu: "GPU",
+    floatingGpuMemory: "Memoire GPU",
+    floatingClose: "Fermer",
   };
 }
 
@@ -224,20 +229,59 @@ function App() {
   const memPercent = stats.memoryTotalBytes ? (stats.memoryUsedBytes / stats.memoryTotalBytes) * 100 : 0;
 
   if (floatingView) {
+    const gpu = stats.gpus[0];
+    const gpuMemoryPercent =
+      gpu?.memoryUsedMb != null && gpu?.memoryTotalMb != null
+        ? (gpu.memoryUsedMb / gpu.memoryTotalMb) * 100
+        : null;
+
     return (
-      <div className="h-screen bg-background/95 p-3 text-foreground">
-        <div className="grid h-full grid-cols-3 gap-2 rounded-lg border border-border/60 bg-card/70 p-3 text-xs">
+      <div
+        data-tauri-drag-region="deep"
+        className="h-screen select-none p-3 text-foreground"
+      >
+        <button
+          type="button"
+          aria-label={t.floatingClose}
+          onClick={async () => {
+            if (isTauriRuntime()) {
+              const { getCurrentWindow } = await import("@tauri-apps/api/window");
+              await getCurrentWindow().hide();
+            }
+          }}
+          className="absolute right-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+
+        <div className="grid h-full grid-cols-3 gap-2 rounded-lg border border-border/60 bg-card/70 p-3 pt-6 text-xs">
           <div className="rounded-md border border-border/60 p-2">
             <p className="text-muted-foreground">{t.floatingCpu}</p>
             <p className="font-mono text-lg">{stats.cpuUsage.toFixed(0)}%</p>
           </div>
+
           <div className="rounded-md border border-border/60 p-2">
             <p className="text-muted-foreground">{t.floatingMem}</p>
             <p className="font-mono text-lg">{memPercent.toFixed(0)}%</p>
           </div>
+
           <div className="rounded-md border border-border/60 p-2">
             <p className="text-muted-foreground">{t.floatingGpu}</p>
-            <p className="font-mono text-lg">{(stats.gpus[0]?.usagePercent ?? 0).toFixed(0)}%</p>
+            <p className="font-mono text-lg">{gpu?.usagePercent != null ? gpu.usagePercent.toFixed(0) : 0}%</p>
+          </div>
+
+          <div className="flex flex-col items-center gap-2 rounded-md border border-border/60 p-2">
+            <p className="text-muted-foreground">{t.floatingGpuMemory}</p>
+            {gpuMemoryPercent == null ? (
+              <p className="font-mono text-lg">—</p>
+            ) : (
+              <RingGauge value={gpuMemoryPercent} />
+            )}
+          </div>
+
+          <div className="flex flex-col items-center gap-2 rounded-md border border-border/60 p-2">
+            <p className="text-muted-foreground">{t.floatingGpu}</p>
+            <RingGauge value={gpu?.usagePercent ?? 0} />
           </div>
         </div>
       </div>
