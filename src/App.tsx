@@ -271,6 +271,11 @@ function App() {
           </div>
 
           <div className="flex flex-col items-center gap-2 rounded-md border border-border/60 p-2">
+            <p className="text-muted-foreground">{t.floatingCpu}</p>
+            <RingGauge value={stats.cpuUsage} />
+          </div>
+
+          <div className="flex flex-col items-center gap-2 rounded-md border border-border/60 p-2">
             <p className="text-muted-foreground">{t.floatingGpuMemory}</p>
             {gpuMemoryPercent == null ? (
               <p className="font-mono text-lg">—</p>
