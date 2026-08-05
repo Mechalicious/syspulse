@@ -20,7 +20,7 @@ A heartbeat / ECG pulse line — a direct nod to the name "Syspulse" and its rea
 
 ### Legibility
 
-Thick pulse line (~72px) stays crisp at 16/32/128/256px; dark background works on both light and dark taskbars.
+Thick pulse line (~64px stroke) stays crisp at 16/32/128/256px; dark background works on both light and dark taskbars.
 
 ## Technical Steps
 
@@ -29,6 +29,13 @@ Thick pulse line (~72px) stays crisp at 16/32/128/256px; dark background works o
 3. Generate full Tauri icon set: `npx tauri icon` → `icon.ico`, `icon.icns`, `32x32.png`, `128x128.png`, `128x128@2x.png`, Windows `Square*.png`, `StoreLogo.png`, etc.
 4. Rebuild: `npm run tauri build`.
 5. Reinstall via NSIS installer (per-user), replacing current install.
+
+> **Note (tauri-build icon cache):** a plain incremental `npm run tauri build`
+> may silently embed the *old* icon, because tauri-build's build script only
+> re-runs on `tauri.conf.json` changes and caches `resource.rc`/`resource.lib`
+> in `src-tauri/target/release/build/syspulse-*`. After changing icons, delete
+> those build-script dirs (and the stale exe) before rebuilding, or the change
+> won't ship.
 
 ## Out of Scope
 
