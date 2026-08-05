@@ -112,8 +112,11 @@ fn setup_tray(app: &AppHandle) -> Result<(), String> {
         .map_err(|e| format!("Création du menu tray impossible: {e}"))?;
     let quit_item = MenuItem::with_id(app, "quit", "Quitter", true, None::<&str>)
         .map_err(|e| format!("Création du menu tray impossible: {e}"))?;
+    let show_floating_item =
+        MenuItem::with_id(app, "show_floating", "Afficher la fenêtre flottante", true, None::<&str>)
+            .map_err(|e| format!("Création du menu tray impossible: {e}"))?;
 
-    let menu = Menu::with_items(app, &[&show_item, &quit_item])
+    let menu = Menu::with_items(app, &[&show_item, &show_floating_item, &quit_item])
         .map_err(|e| format!("Création du menu tray impossible: {e}"))?;
 
     let tray_icon = app
@@ -127,6 +130,12 @@ fn setup_tray(app: &AppHandle) -> Result<(), String> {
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+            "show_floating" => {
+                if let Some(window) = app.get_webview_window("floating") {
                     let _ = window.show();
                     let _ = window.set_focus();
                 }
