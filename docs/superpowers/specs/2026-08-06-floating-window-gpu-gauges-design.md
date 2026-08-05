@@ -52,7 +52,7 @@ Upgrade the floating system-information window so it is:
 2. Rework the `floatingView` branch in `src/App.tsx`:
    - Root container gets `data-tauri-drag-region="deep"`.
    - Add X button (import `getCurrentWindow`).
-   - Two-row layout with GPU memory + GPU usage gauge tiles.
+   - Two-row layout with CPU + GPU memory + GPU usage gauge tiles (CPU gauge added at user's request during implementation; top-row CPU number tile remains).
    - Add i18n keys (`floatingGpuMemory`, close aria-label) to `appText` EN/FR maps.
 3. `lib.rs`:
    - `apply_floating_window`: size 400×220.
