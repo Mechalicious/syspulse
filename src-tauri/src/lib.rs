@@ -77,7 +77,7 @@ fn apply_floating_window(app: &AppHandle, enabled: bool) -> Result<(), String> {
             .always_on_top(true)
             .decorations(false)
             .resizable(false)
-            .inner_size(320.0, 170.0)
+            .inner_size(400.0, 220.0)
             .build()
             .map_err(|e| format!("Impossible d'ouvrir la fenêtre flottante: {e}"))?;
         }
