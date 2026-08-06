@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Cpu, MemoryStick, MonitorSmartphone, X } from "lucide-react";
 import { RingGauge } from "@/components/floating/ring-gauge";
 import { Sidebar } from "@/components/layout/sidebar";
+import { TitleBar } from "@/components/layout/title-bar";
 import { UsageCard, type HistoryPoint } from "@/components/dashboard/usage-card";
 import { CoreGrid } from "@/components/dashboard/core-grid";
 import { ProcessTable } from "@/components/dashboard/process-table";
@@ -90,6 +91,10 @@ function appText(language: AppLanguage) {
       floatingGpu: "GPU",
       floatingGpuMemory: "GPU Memory",
       floatingClose: "Close",
+      windowClose: "Close",
+      windowMinimize: "Minimize",
+      windowMaximize: "Maximize",
+      windowRestore: "Restore",
     };
   }
 
@@ -117,6 +122,10 @@ function appText(language: AppLanguage) {
     floatingGpu: "GPU",
     floatingGpuMemory: "Memoire GPU",
     floatingClose: "Fermer",
+    windowClose: "Fermer",
+    windowMinimize: "Reduire",
+    windowMaximize: "Agrandir",
+    windowRestore: "Restaurer",
   };
 }
 
@@ -294,33 +303,25 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
-      <Sidebar activeSection={section} onNavigate={setSection} language={settings.language} />
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+      <TitleBar
+        statusLabel={source === "mock" ? t.demo : t.live}
+        statusTone={source === "mock" ? "demo" : "live"}
+        closeLabel={t.windowClose}
+        minimizeLabel={t.windowMinimize}
+        maximizeLabel={t.windowMaximize}
+        restoreLabel={t.windowRestore}
+      />
 
-      <main className="flex-1 overflow-hidden">
-        <div className="scrollbar-thin h-full overflow-y-auto">
-          <div className="mx-auto max-w-6xl space-y-4 p-6">
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar activeSection={section} onNavigate={setSection} language={settings.language} />
+
+        <main className="flex-1 overflow-hidden">
+          <div className="scrollbar-thin h-full overflow-y-auto">
+            <div className="mx-auto max-w-6xl space-y-4 p-6">
           {section === "dashboard" ? (
             <>
               <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/70 shadow-sm">
-                <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-warning/80" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-success/80" />
-                    <span className="ml-2 font-mono text-[11px] tracking-wide text-muted-foreground">SYSPULSE.EXE</span>
-                  </div>
-                  {source === "mock" ? (
-                    <span className="rounded-md border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning">
-                      {t.demo}
-                    </span>
-                  ) : (
-                    <span className="rounded-md border border-success/40 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-                      {t.live}
-                    </span>
-                  )}
-                </div>
-
                 <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                   <div>
                     <h1 className="text-lg font-semibold tracking-tight">{t.title.dashboard}</h1>
@@ -434,9 +435,10 @@ function App() {
           ) : (
             <ProcessTable processes={stats.processes} logicalThreads={stats.cpuPerCore.length} />
           )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
